@@ -16,7 +16,7 @@ sys_fork(void)
 int
 sys_exit(void)
 {
-  exit();
+  exit(1);
   return 0;  // not reached
 }
 
@@ -40,6 +40,12 @@ int
 sys_getpid(void)
 {
   return myproc()->pid;
+}
+
+int
+sys_getppid(void)
+{
+  return myproc()->parent->pid;
 }
 
 int
@@ -88,4 +94,11 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+int
+sys_add(void){
+  int a = 1;
+  int b = 2020;
+  return a+b;
 }
