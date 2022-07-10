@@ -23,7 +23,7 @@ sys_exit(void)
 int
 sys_wait(void)
 {
-  return wait();
+  return wait(int* status);
 }
 
 int
@@ -101,4 +101,10 @@ sys_add(void){
   int a = 1;
   int b = 2020;
   return a+b;
+}
+
+int ps(void){
+  //print a list of all processes along with the parent and status of each
+  //count of number of the process that was scheduled and it's total memory size
+  return 0;
 }
