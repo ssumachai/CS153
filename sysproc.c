@@ -16,7 +16,11 @@ sys_fork(void)
 int
 sys_exit(void)
 {
-  exit(1);
+  int status;
+  if(argint(0, &status) < 0){
+    return -1;
+  }
+  exit(status);
   return 0;  // not reached
 }
 
@@ -105,16 +109,8 @@ sys_add(void){
   return a+b;
 }
 
-int sys_ps(void){
-  //print a list of all processes along with the parent and status of each
-  //count of number of the process that was scheduled and it's total memory size
-
-  acquire(&ptable.lock)
-
-  for(p = ptable.proc; p < &ptable.proc(NPROC); p++){
-  // this will iterate through the ptable, ask the ta if there is a specific format he wants it printed
-  }
-
-  release(&ptable.lock)
-  return 0;
+int 
+sys_ps(void)
+{
+  return ps();
 }
