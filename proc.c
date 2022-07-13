@@ -263,6 +263,7 @@ exit(int status)
 
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
+  curproc->exit_status = status;
   sched();
   panic("zombie exit");
 }
@@ -295,6 +296,10 @@ wait(int* status)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
+        if(status){
+          *status = p->exit_status;
+        }
+        p->exit_status = 0;
         release(&ptable.lock);
         return pid;
       }
@@ -531,4 +536,42 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int
+ps(void){
+    //print a list of all processes along with the parent and status of each
+  //count of number of the process that was scheduled and it's total memory size
+  static char *states[] = {
+  [UNUSED]    "unused",
+  [EMBRYO]    "embryo",
+  [SLEEPING]  "sleep ",
+  [RUNNABLE]  "runble",
+  [RUNNING]   "run   ",
+  [ZOMBIE]    "zombie"
+  };
+  //int i;
+  int count = 0;
+  struct proc *p;
+  char *state;
+  //uint pc[10];
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state == UNUSED)
+      continue;
+    if(p->state >= 0 && p->state < NELEM(states) && states[p->state])
+      state = states[p->state];
+    else
+      state = "???";
+    cprintf("%d %d %d %s %d", count, p->pid, p->parent->pid, state, p->sz);
+    count++;
+    /*
+    if(p->state == SLEEPING){
+      getcallerpcs((uint*)p->context->ebp+2, pc);
+      for(i=0; i<10 && pc[i] != 0; i++)
+        cprintf(" %p", pc[i]);
+    }*/
+    cprintf("\n");
+  }
+return 0;
 }
