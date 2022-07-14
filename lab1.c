@@ -7,6 +7,7 @@ int main(int argc, char *argv[])
 {
 	
 	int exitWait(void);
+  ps();
 	//int waitPid(void);
 	//int CELEBW02(void);
 
