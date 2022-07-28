@@ -86,9 +86,9 @@ allocproc(void)
   return 0;
 
 found:
+  p->priority = 0;
   p->state = EMBRYO;
   p->pid = nextpid++;
-
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -214,8 +214,8 @@ fork(void)
 
   acquire(&ptable.lock);
 
-  np->state = RUNNABLE;
-
+    np->state = RUNNABLE;
+  
   release(&ptable.lock);
 
   return pid;
@@ -344,6 +344,7 @@ scheduler(void)
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
+      
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
@@ -574,4 +575,11 @@ ps(void){
     cprintf("\n");
   }
 return 0;
+}
+
+void
+setpriority(int prior)
+{
+  struct proc *curproc = myproc();
+  curproc->priority = prior;
 }

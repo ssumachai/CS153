@@ -114,3 +114,13 @@ sys_ps(void)
 {
   return ps();
 }
+
+int 
+sys_setpriority(void){
+  int prior;
+  if(argint(0, &prior) < 0){
+    return -1;
+  }
+  setpriority(prior);
+  return 0;
+}

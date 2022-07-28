@@ -106,6 +106,7 @@ extern int sys_uptime(void);
 extern int sys_add(void);
 extern int sys_getppid(void);
 extern int sys_ps(void);
+extern int sys_setpriority(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -132,6 +133,7 @@ static int (*syscalls[])(void) = {
 [SYS_add]     sys_add,
 [SYS_getppid] sys_getppid,
 [SYS_ps]      sys_ps,
+[SYS_setpriority] sys_setpriority,
 };
 
 void
