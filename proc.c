@@ -86,9 +86,9 @@ allocproc(void)
   return 0;
 
 found:
-  p->priority = 0;
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->priority = 10;
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -199,6 +199,7 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
+  np->start_time = ticks;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -247,6 +248,8 @@ exit(int status)
   end_op();
   curproc->cwd = 0;
 
+  //cprintf("\n PID %d Turnaround Time: %d\n", curproc->pid, ticks - curproc->start_time);
+  
   acquire(&ptable.lock);
 
   // Parent might be sleeping in wait(int* status).
@@ -328,6 +331,8 @@ void
 scheduler(void)
 {
   struct proc *p;
+  struct proc *temp;
+  struct proc *highestp;
   struct cpu *c = mycpu();
   c->proc = 0;
   
@@ -340,11 +345,22 @@ scheduler(void)
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
-
+  
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-      
+
+      highestp = p;      
+      for(temp = ptable.proc; temp < &ptable.proc[NPROC]; temp++){
+        if(temp->state != RUNNABLE)
+          continue;
+        
+        if(temp->priority < highestp->priority)
+          highestp = temp;
+        
+      }
+
+      p = highestp;     
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
