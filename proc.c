@@ -248,7 +248,7 @@ exit(int status)
   end_op();
   curproc->cwd = 0;
 
-  //cprintf("\n PID %d Turnaround Time: %d\n", curproc->pid, ticks - curproc->start_time);
+  cprintf("\n PID %d Turnaround Time: %d\n", curproc->pid, ticks - curproc->start_time);
   
   acquire(&ptable.lock);
 
@@ -596,6 +596,9 @@ return 0;
 void
 setpriority(int prior)
 {
-  struct proc *curproc = myproc();
-  curproc->priority = prior;
+  acquire(&ptable.lock); 
+  myproc()->state = RUNNABLE;
+  myproc()->priority = prior;
+  sched();
+  release(&ptable.lock);
 }
