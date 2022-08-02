@@ -117,10 +117,11 @@ sys_ps(void)
 
 int 
 sys_setpriority(void){
-  int prior;
-  if(argint(0, &prior) < 0){
+  int priority;
+
+  if(argint(0, &priority) < 0){
     return -1;
   }
-  setpriority(prior);
-  return 0;
+
+  return setpriority(priority);
 }

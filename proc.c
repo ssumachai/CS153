@@ -331,8 +331,6 @@ void
 scheduler(void)
 {
   struct proc *p;
-  struct proc *temp;
-  struct proc *highestp;
   struct cpu *c = mycpu();
   c->proc = 0;
   
@@ -342,30 +340,36 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+
+    struct proc *highp;
+    highp = ptable.proc;
+
+
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+      if((p->state != RUNNABLE) && (p->priority > highp->priority) && (p->priority > 1)){
+        p->priority--;
+      }
+      else if(p->state != RUNNABLE)
+      {
         continue;
+      }
+
+      if(p->priority < highp->priority){
+        highp = p;
+      }
+      else if(p->priority > 1){
+        p->priority--;
+      }
   
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
 
-      highestp = p;      
-      for(temp = ptable.proc; temp < &ptable.proc[NPROC]; temp++){
-        if(temp->state != RUNNABLE)
-          continue;
-        
-        if(temp->priority < highestp->priority)
-          highestp = temp;
-        
-      }
+      c->proc = highp;
+      switchuvm(highp);
+      highp->state = RUNNING;
 
-      p = highestp;     
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-
-      swtch(&(c->scheduler), p->context);
+      swtch(&(c->scheduler), highp->context);
       switchkvm();
 
       // Process is done running for now.
@@ -593,12 +597,17 @@ ps(void){
 return 0;
 }
 
-void
+int
 setpriority(int prior)
 {
-  acquire(&ptable.lock); 
-  myproc()->state = RUNNABLE;
-  myproc()->priority = prior;
-  sched();
-  release(&ptable.lock);
+  struct proc *p = myproc();
+
+  if(prior < 0 || prior > 31){
+    return -1;
+  }
+  else{
+    p->priority = prior;
+  }
+
+  return 0;
 }
