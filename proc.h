@@ -52,6 +52,7 @@ struct proc {
   int exit_status;             //exit status
   int priority;                //set priority
   int start_time;              //time process started
+  int running_time;            //time spent in RUNNING
 };
 
 // Process memory is laid out contiguously, low addresses first:
