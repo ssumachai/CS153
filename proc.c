@@ -248,7 +248,7 @@ exit(int status)
   end_op();
   curproc->cwd = 0;
 
-  cprintf("\n PID %d Turnaround Time: %d\n", curproc->pid, ticks - curproc->start_time);
+  cprintf("\n PID %d Turnaround Time: %d  Wait Time: %d\n", curproc->pid, ticks - curproc->start_time, ticks - curproc->start_time - curproc->running_time);
   
   acquire(&ptable.lock);
 
@@ -333,7 +333,8 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-  
+  int srun = 0;
+
   for(;;){
     // Enable interrupts on this processor.
     sti();
@@ -367,11 +368,11 @@ scheduler(void)
 
       c->proc = highp;
       switchuvm(highp);
+      srun = ticks;
       highp->state = RUNNING;
-
       swtch(&(c->scheduler), highp->context);
       switchkvm();
-
+      p->running_time += (ticks - srun);
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
