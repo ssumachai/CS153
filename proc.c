@@ -327,58 +327,54 @@ wait(int* status)
 //  - swtch to start running that process
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
-void
-scheduler(void)
+void scheduler(void)
 {
-  struct proc *p;
+  struct proc *p; //make p our new high/low priority proc
   struct cpu *c = mycpu();
   c->proc = 0;
-  int srun = 0;
 
-  for(;;){
+  for (;;)
+  {
     // Enable interrupts on this processor.
     sti();
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
 
-    struct proc *highp;
-    highp = ptable.proc;
+    struct proc *highPriority;
+    highPriority = ptable.proc;
 
-
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if((p->state == RUNNABLE) && (p->priority > highp->priority) && (p->priority > 1)){
+    //p = find_proc_with_lowest_prior_value(ptable); //from slides
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      //we find RUNNABLE proc with highest priority instead of the process that wants to execute.
+      if ((p->state == RUNNABLE) && (p->priority > highPriority->priority) && (p->priority > 1)){
         p->priority--;
       }
-      else if(p->state != RUNNABLE)
-      {
+      else if (p->state != RUNNABLE){
         continue;
       }
 
-      if(p->priority < highp->priority){
-        highp = p;
+      if (p->priority < highPriority->priority){
+        highPriority = p;
       }
-      else if(p->priority > 1){
+      else if (p->priority > 1){
         p->priority--;
       }
-  
+    }
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-
-      c->proc = highp;
-      switchuvm(highp);
-      srun = ticks;
-      highp->state = RUNNING;
-      swtch(&(c->scheduler), highp->context);
+      c->proc = highPriority;
+      switchuvm(highPriority);
+      highPriority->state = RUNNING;
+      swtch(&(c->scheduler), highPriority->context);
       switchkvm();
-      p->running_time += (ticks - srun);
+
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
-    }
-    release(&ptable.lock);
 
+    release(&ptable.lock);
   }
 }
 
