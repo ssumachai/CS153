@@ -23,3 +23,4 @@
 #define SYS_add	   22
 #define SYS_getppid 23
 #define SYS_ps     24
+#define SYS_setpriority 25

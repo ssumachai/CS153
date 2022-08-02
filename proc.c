@@ -88,7 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-
+  p->priority = 32;
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -199,6 +199,7 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
+  np->start_time = ticks;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -214,8 +215,8 @@ fork(void)
 
   acquire(&ptable.lock);
 
-  np->state = RUNNABLE;
-
+    np->state = RUNNABLE;
+  
   release(&ptable.lock);
 
   return pid;
@@ -247,6 +248,8 @@ exit(int status)
   end_op();
   curproc->cwd = 0;
 
+  cprintf("\n PID %d Turnaround Time: %d\n", curproc->pid, ticks - curproc->start_time);
+  
   acquire(&ptable.lock);
 
   // Parent might be sleeping in wait(int* status).
@@ -337,18 +340,36 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
 
+    struct proc *highp;
+    highp = ptable.proc;
+
+
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if((p->state == RUNNABLE) && (p->priority > highp->priority) && (p->priority > 1)){
+        p->priority--;
+      }
+      else if(p->state != RUNNABLE)
+      {
+        continue;
+      }
+
+      if(p->priority < highp->priority){
+        highp = p;
+      }
+      else if(p->priority > 1){
+        p->priority--;
+      }
+  
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
 
-      swtch(&(c->scheduler), p->context);
+      c->proc = highp;
+      switchuvm(highp);
+      highp->state = RUNNING;
+
+      swtch(&(c->scheduler), highp->context);
       switchkvm();
 
       // Process is done running for now.
@@ -574,4 +595,19 @@ ps(void){
     cprintf("\n");
   }
 return 0;
+}
+
+int
+setpriority(int prior)
+{
+  struct proc *p = myproc();
+
+  if(prior < 0 || prior > 31){
+    return -1;
+  }
+  else{
+    p->priority = prior;
+  }
+
+  return 0;
 }
